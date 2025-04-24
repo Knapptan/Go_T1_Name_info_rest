@@ -52,3 +52,4 @@ dkms.conf
 !go.mod
 
 *.pdf
+*.DS_Store
