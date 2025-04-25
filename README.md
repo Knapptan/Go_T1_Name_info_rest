@@ -22,3 +22,11 @@
     ├── clients     # Клиенты внешних API
     └── logger      # Логирование
 ```
+
+Роутинг: chi
+
+Конфигурация: godotenv
+
+Миграции: golang-migrate
+
+Swagger: swaggo

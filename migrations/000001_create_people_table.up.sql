@@ -6,5 +6,6 @@ CREATE TABLE persons (
   age INT,
   gender TEXT,
   nationality TEXT,
-  created_at TIMESTAMP NOT NULL DEFAULT now()
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );

@@ -5,6 +5,8 @@ import (
 	"log"
 
 	"effective-mobile/internal/config"
+
+	"github.com/go-chi/chi"
 )
 
 func main() {
@@ -16,11 +18,11 @@ func main() {
 
 	fmt.Printf("%w", cfg)
 
-	// r := chi.NewRouter()
-	// r.Route("/api/v1/people", func(r chi.Router) {
-	// 	r.Post("/", h.CreatePerson)
-	// 	r.Get("/", h.GetPeople)
-	// 	r.Put("/{id}", h.UpdatePerson)
-	// 	r.Delete("/{id}", h.DeletePerson)
-	// })
+	r := chi.NewRouter()
+	r.Route("/api/v1/people", func(r chi.Router) {
+		// 	r.Post("/", h.CreatePerson)
+		// 	r.Get("/", h.GetPeople)
+		// 	r.Put("/{id}", h.UpdatePerson)
+		// 	r.Delete("/{id}", h.DeletePerson)
+	})
 }
