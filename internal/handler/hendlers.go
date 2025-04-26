@@ -9,16 +9,27 @@ import (
 // "log"
 // "github.com/go-chi/chi"
 
+// r.Post("/", h.CreatePerson)
 func CreatePerson(w http.ResponseWriter, r *http.Request) {
 	var input models.PersonInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		// Валидация и возврат 400
 	}
-	// Логика обогощения данных 
+	// Логика обогощения данных
 	// Сохранение в бд
 }
 
-// 	r.Post("/", h.CreatePerson)
-// 	r.Get("/", h.GetPeople)
-// 	r.Put("/{id}", h.UpdatePerson)
-// 	r.Delete("/{id}", h.DeletePerson)
+// r.Get("/", h.GetPeople)
+func GetPeople() {
+
+}
+
+// r.Put("/{id}", h.UpdatePerson)
+func UpdatePerson() {
+
+}
+
+// r.Delete("/{id}", h.DeletePerson)
+func DeletePerson() {
+
+}
