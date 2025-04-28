@@ -58,3 +58,9 @@ type PersonUpdate struct {
 	Gender      *string `json:"gender,omitempty"`
 	Nationality *string `json:"nationality,omitempty"`
 }
+
+type Enrichment struct {
+	Age         int
+	Gender      string
+	Nationality string
+}
