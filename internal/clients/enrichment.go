@@ -30,7 +30,7 @@ type GenderResponse struct {
 
 type NationalityResponse struct {
 	Country []struct {
-		CountryId   string  `jspon:"country_id"`
+		CountryID   string  `json:"country_id"`
 		Probability float64 `json:"probability"`
 	} `json:"country"`
 }
@@ -86,7 +86,15 @@ func (c *EnrichmentClient) GetNationality(name string) (string, error) {
 		return "", fmt.Errorf("nationalize returned status: %d", resp.StatusCode)
 	}
 
-	body, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if len(body) == 0 {
+		return "", fmt.Errorf("empty response body from nationalize.io")
+	}
+
 	var nationalityResp NationalityResponse
 	if err := json.Unmarshal(body, &nationalityResp); err != nil {
 		return "", fmt.Errorf("failed to parse nationalize response: %w", err)
@@ -96,12 +104,12 @@ func (c *EnrichmentClient) GetNationality(name string) (string, error) {
 		return "", fmt.Errorf("no nationality found")
 	}
 
-	maxProb := 0.0
+	var maxProb float64 = 0.0
 	result := ""
 	for _, country := range nationalityResp.Country {
 		if country.Probability > maxProb {
 			maxProb = country.Probability
-			result = country.CountryId
+			result = country.CountryID
 		}
 	}
 
