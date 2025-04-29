@@ -30,9 +30,9 @@ func (cfg *Config) DatabaseURL() string {
 }
 
 type PersonInput struct {
-	Name       string `json:"name"`
-	Surname    string `json:"surname"`
-	Patronymic string `json:"patronymic"`
+	Name       string  `json:"name"`
+	Surname    string  `json:"surname"`
+	Patronymic *string `json:"patronymic,omitempty"`
 }
 
 type PersonEnriched struct {

@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"time"
 
+	"effective-mobile/internal/clients"
 	"effective-mobile/internal/config"
 	"effective-mobile/internal/models"
 	"effective-mobile/internal/repository"
+	"effective-mobile/internal/service"
 
 	"github.com/go-chi/chi"
 )
@@ -29,22 +29,26 @@ func main() {
 
 	repo := repository.NewPostgresRepository(pool)
 
-	Patronymic := "Auto"
+	enricher := clients.NewEnrichmentClient()
 
-	person := &models.PersonEnriched{
-		Name:        "Test",
-		Surname:     "User",
-		Patronymic:  &Patronymic,
-		Age:         30,
-		Gender:      "male",
-		Nationality: "US",
+	personService := service.NewPersonService(repo, enricher)
+
+	patronymic := "Vasilevich"
+
+	personInput := models.PersonInput{
+		Name:       "Dmitriy",
+		Surname:    "Ushakov",
+		Patronymic: &patronymic,
+	}
+
+	person, err := personService.CreatePersonEnriched(ctx, personInput)
+	if err != nil {
+		log.Fatalf("CreatePersonEnriched failed: %v", err)
 	}
 
 	if err := repo.CreatePerson(ctx, person); err != nil {
 		log.Fatalf("CreatePerson failed: %v", err)
 	}
-
-	fmt.Printf("Created person: ID=%d, CreatedAt=%s\n", person.ID, person.CreatedAt.Format(time.RFC3339))
 
 	r := chi.NewRouter()
 	r.Route("/api/v1/people", func(r chi.Router) {

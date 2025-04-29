@@ -76,7 +76,7 @@ func (c *EnrichmentClient) GetGender(name string) (string, error) {
 }
 
 func (c *EnrichmentClient) GetNationality(name string) (string, error) {
-	resp, err := c.client.Get(fmt.Sprintf(" https://api.nationalize.io/?name=%s", name))
+	resp, err := c.client.Get(fmt.Sprintf("https://api.nationalize.io/?name=%s", name))
 	if err != nil {
 		return "", fmt.Errorf("nationalize request failed: %w", err)
 	}
