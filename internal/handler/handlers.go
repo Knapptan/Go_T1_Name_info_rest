@@ -177,7 +177,19 @@ func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-// Put Handler Обновление данных человека
+// UpdatePerson godoc
+// @Summary Обновить данные человека
+// @Description Обновление данных существующей персоны
+// @Tags people
+// @Accept json
+// @Produce json
+// @Param id path int true "ID человека"
+// @Param update body models.PersonUpdate true "Данные для обновления"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /people/{id} [put]
 func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	logMethod := zap.String("method", r.Method)
 	logPath := zap.String("path", r.URL.Path)
@@ -242,7 +254,17 @@ func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// Delete Handler Удаление человека по ID
+// DeletePerson godoc
+// @Summary Удалить человека
+// @Description Удаление персоны по идентификатору
+// @Tags people
+// @Produce json
+// @Param id path int true "ID человека"
+// @Success 204
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /people/{id} [delete]
 func (h *Handler) DeletePerson(w http.ResponseWriter, r *http.Request) {
 	logMethod := zap.String("method", r.Method)
 	logPath := zap.String("path", r.URL.Path)

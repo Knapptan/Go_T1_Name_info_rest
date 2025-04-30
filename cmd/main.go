@@ -1,18 +1,10 @@
-// @title Effective Mobile API
-// @version 1.0
-// @description REST API для работы с данными людей
-
-// @contact.name API Support
-// @contact.email support@effective-mobile.ru
-
-// @host localhost:8080
-// @BasePath /api/v1
 package main
 
 import (
 	"context"
 	"net/http"
 
+	_ "effective-mobile/docs"
 	"effective-mobile/internal/clients"
 	"effective-mobile/internal/config"
 	"effective-mobile/internal/handler"
@@ -24,6 +16,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// @title Effective Mobile API
+// @version 1.0
+// @description REST API для работы с данными людей
+
+// @contact.name API Support
+// @contact.email support@effective-mobile.ru
+
+// @host localhost:8080
+// @BasePath /api/v1
 func main() {
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
@@ -45,12 +46,12 @@ func main() {
 	h := handler.NewHandler(svc, logger)
 
 	r := chi.NewRouter()
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 	r.Route("/api/v1/people", func(r chi.Router) {
 		r.Post("/", h.CreatePerson)
 		r.Get("/", h.GetPeople)
 		r.Patch("/{id}", h.UpdatePerson)
 		r.Delete("/{id}", h.DeletePerson)
-		r.Get("/swagger/*", httpSwagger.WrapHandler)
 	})
 
 	logger.Info("Starting server",

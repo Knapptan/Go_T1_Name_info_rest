@@ -44,7 +44,7 @@ type PersonEnriched struct {
 	Age         int       `json:"age" example:"30"`
 	Gender      string    `json:"gender" example:"male"`
 	Nationality string    `json:"nationality" example:"RU"`
-	CreatedAt   time.Time `json:"created_at" example:"2023-10-23T12:34:56Z`
+	CreatedAt   time.Time `json:"created_at" example:"2023-10-23T12:34:56Z" format:"date-time"`
 }
 
 type Filters struct {

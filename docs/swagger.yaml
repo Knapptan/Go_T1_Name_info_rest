@@ -1,11 +1,13 @@
 basePath: /api/v1
 definitions:
-  models.PersonEnriched:
+  effective-mobile_internal_models.PersonEnriched:
     properties:
       age:
         example: 30
         type: integer
       created_at:
+        example: "2023-10-23T12:34:56Z"
+        format: date-time
         type: string
       gender:
         example: male
@@ -26,7 +28,7 @@ definitions:
         example: Ivanov
         type: string
     type: object
-  models.PersonInput:
+  effective-mobile_internal_models.PersonInput:
     properties:
       name:
         example: Ivan
@@ -36,6 +38,21 @@ definitions:
         type: string
       surname:
         example: Ivanov
+        type: string
+    type: object
+  effective-mobile_internal_models.PersonUpdate:
+    properties:
+      age:
+        type: integer
+      gender:
+        type: string
+      name:
+        type: string
+      nationality:
+        type: string
+      patronymic:
+        type: string
+      surname:
         type: string
     type: object
 host: localhost:8080
@@ -76,7 +93,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.PersonEnriched'
+              $ref: '#/definitions/effective-mobile_internal_models.PersonEnriched'
             type: array
         "500":
           description: Internal Server Error
@@ -97,14 +114,14 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/models.PersonInput'
+          $ref: '#/definitions/effective-mobile_internal_models.PersonInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.PersonEnriched'
+            $ref: '#/definitions/effective-mobile_internal_models.PersonEnriched'
         "400":
           description: Bad Request
           schema:
@@ -118,6 +135,87 @@ paths:
               type: string
             type: object
       summary: Создать нового человека
+      tags:
+      - people
+  /people/{id}:
+    delete:
+      description: Удаление персоны по идентификатору
+      parameters:
+      - description: ID человека
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить человека
+      tags:
+      - people
+    put:
+      consumes:
+      - application/json
+      description: Обновление данных существующей персоны
+      parameters:
+      - description: ID человека
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные для обновления
+        in: body
+        name: update
+        required: true
+        schema:
+          $ref: '#/definitions/effective-mobile_internal_models.PersonUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Обновить данные человека
       tags:
       - people
 swagger: "2.0"
