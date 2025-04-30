@@ -1,0 +1,123 @@
+basePath: /api/v1
+definitions:
+  models.PersonEnriched:
+    properties:
+      age:
+        example: 30
+        type: integer
+      created_at:
+        type: string
+      gender:
+        example: male
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Ivan
+        type: string
+      nationality:
+        example: RU
+        type: string
+      patronymic:
+        example: Ivanovich
+        type: string
+      surname:
+        example: Ivanov
+        type: string
+    type: object
+  models.PersonInput:
+    properties:
+      name:
+        example: Ivan
+        type: string
+      patronymic:
+        example: Ivanovich
+        type: string
+      surname:
+        example: Ivanov
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@effective-mobile.ru
+    name: API Support
+  description: REST API для работы с данными людей
+  title: Effective Mobile API
+  version: "1.0"
+paths:
+  /people:
+    get:
+      description: Получение списка людей с фильтрацией и пагинацией
+      parameters:
+      - description: Фильтр по имени
+        in: query
+        name: name
+        type: string
+      - description: Фильтр по полу
+        in: query
+        name: gender
+        type: string
+      - default: 1
+        description: Номер страницы
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Лимит на странице
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.PersonEnriched'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить список людей
+      tags:
+      - people
+    post:
+      consumes:
+      - application/json
+      description: Создание новой персоны с обогащением данных
+      parameters:
+      - description: Данные человека
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.PersonInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.PersonEnriched'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Создать нового человека
+      tags:
+      - people
+swagger: "2.0"

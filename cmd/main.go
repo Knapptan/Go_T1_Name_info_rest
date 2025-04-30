@@ -1,3 +1,12 @@
+// @title Effective Mobile API
+// @version 1.0
+// @description REST API для работы с данными людей
+
+// @contact.name API Support
+// @contact.email support@effective-mobile.ru
+
+// @host localhost:8080
+// @BasePath /api/v1
 package main
 
 import (
@@ -11,6 +20,7 @@ import (
 	"effective-mobile/internal/service"
 
 	"github.com/go-chi/chi"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 )
 
@@ -40,6 +50,7 @@ func main() {
 		r.Get("/", h.GetPeople)
 		r.Patch("/{id}", h.UpdatePerson)
 		r.Delete("/{id}", h.DeletePerson)
+		r.Get("/swagger/*", httpSwagger.WrapHandler)
 	})
 
 	logger.Info("Starting server",

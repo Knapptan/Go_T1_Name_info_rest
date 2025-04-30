@@ -1,3 +1,16 @@
+// @Title Effective Mobile API
+// @Version 1.0
+// @Description REST API для работы с данными людей
+
+// @ContactName API Support
+// @ContactEmail support@effective-mobile.ru
+
+// @Host localhost:8080
+// @BasePath /api/v1
+
+// @SecurityDefinitions.basic BasicAuth
+
+// Handlers.go
 package handler
 
 import (
@@ -26,7 +39,17 @@ func NewHandler(svc *service.PersonService, logger *zap.Logger) *Handler {
 	}
 }
 
-// Post Handler Создание обогащённого человека
+// CreatePerson godoc
+// @Summary Создать нового человека
+// @Description Создание новой персоны с обогащением данных
+// @Tags people
+// @Accept  json
+// @Produce json
+// @Param   input body models.PersonInput true "Данные человека"
+// @Success 201 {object} models.PersonEnriched
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /people [post]
 func (h *Handler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 
 	start := time.Now()
@@ -75,7 +98,18 @@ func (h *Handler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-// Get Handler Получение списка людей с фильтрами и пагинацией
+// GetPeople godoc
+// @Summary Получить список людей
+// @Description Получение списка людей с фильтрацией и пагинацией
+// @Tags people
+// @Produce json
+// @Param   name    query string false "Фильтр по имени"
+// @Param   gender  query string false "Фильтр по полу"
+// @Param   page    query int    false "Номер страницы" default(1)
+// @Param   limit   query int    false "Лимит на странице" default(10)
+// @Success 200 {array} models.PersonEnriched
+// @Failure 500 {object} map[string]string
+// @Router /people [get]
 func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
 	logMethod := zap.String("method", r.Method)
 	logPath := zap.String("path", r.URL.Path)

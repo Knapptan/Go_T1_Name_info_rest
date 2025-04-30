@@ -31,20 +31,20 @@ func (cfg *Config) DatabaseURL() string {
 }
 
 type PersonInput struct {
-	Name       string  `json:"name"`
-	Surname    string  `json:"surname"`
-	Patronymic *string `json:"patronymic,omitempty"`
+	Name       string  `json:"name" example:"Ivan"`
+	Surname    string  `json:"surname" example:"Ivanov"`
+	Patronymic *string `json:"patronymic,omitempty" example:"Ivanovich"`
 }
 
 type PersonEnriched struct {
-	ID          int       `json:"id"`
-	Name        string    `json:"name"`
-	Surname     string    `json:"surname"`
-	Patronymic  *string   `json:"patronymic,omitempty"`
-	Age         int       `json:"age"`
-	Gender      string    `json:"gender"`
-	Nationality string    `json:"nationality"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID          int       `json:"id" example:"1"`
+	Name        string    `json:"name" example:"Ivan"`
+	Surname     string    `json:"surname" example:"Ivanov"`
+	Patronymic  *string   `json:"patronymic,omitempty" example:"Ivanovich"`
+	Age         int       `json:"age" example:"30"`
+	Gender      string    `json:"gender" example:"male"`
+	Nationality string    `json:"nationality" example:"RU"`
+	CreatedAt   time.Time `json:"created_at" example:"2023-10-23T12:34:56Z`
 }
 
 type Filters struct {
