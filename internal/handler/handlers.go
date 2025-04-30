@@ -77,6 +77,17 @@ func (h *Handler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 
 // Get Handler Получение списка людей с фильтрами и пагинацией
 func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
+	logMethod := zap.String("method", r.Method)
+	logPath := zap.String("path", r.URL.Path)
+
+	start := time.Now()
+	defer func() {
+		h.logger.Debug("Request completed",
+			logMethod,
+			logPath,
+			zap.Duration("duration", time.Since(start)))
+	}()
+
 	filters := models.Filters{
 		Name:   r.URL.Query().Get("name"),
 		Gender: r.URL.Query().Get("gender"),
@@ -95,58 +106,166 @@ func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
 	filters.Offset = (page - 1) * limit
 	filters.Limit = limit
 
+	h.logger.Debug("Fetching people",
+		logMethod,
+		logPath,
+		zap.Any("filters", filters),
+		zap.Int("page", page),
+		zap.Int("limit", limit),
+	)
+
 	people, err := h.svc.GetPersons(r.Context(), filters)
 	if err != nil {
+		h.logger.Error("Failed to fetch people",
+			logMethod,
+			logPath,
+			zap.Error(err),
+			zap.Any("filters", filters),
+		)
 		http.Error(w, "failed to fetch people: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(people)
+	if err := json.NewEncoder(w).Encode(people); err != nil {
+		h.logger.Error("Failed to encode response",
+			logMethod,
+			logPath,
+			zap.Error(err),
+		)
+		return
+	}
+
+	h.logger.Info("People fetched successfully",
+		logMethod,
+		logPath,
+		zap.Int("count", len(people)),
+	)
 }
 
 // Put Handler Обновление данных человека
 func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
+	logMethod := zap.String("method", r.Method)
+	logPath := zap.String("path", r.URL.Path)
+
+	start := time.Now()
+	defer func() {
+		h.logger.Debug("Request completed",
+			logMethod,
+			logPath,
+			zap.Duration("duration", time.Since(start)))
+	}()
+
 	idParam := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
+		h.logger.Warn("Invalid ID parameter",
+			logMethod,
+			logPath,
+			zap.String("id_param", idParam),
+			zap.Error(err),
+		)
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
 
 	var upd models.PersonUpdate
 	if err := json.NewDecoder(r.Body).Decode(&upd); err != nil {
+		h.logger.Error("Invalid request body",
+			logMethod,
+			logPath,
+			zap.Error(err),
+		)
 		http.Error(w, "invalid JSON body", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
+	h.logger.Debug("Updating person",
+		logMethod,
+		logPath,
+		zap.Int("person_id", id),
+		zap.Any("update_data", upd),
+	)
+
 	if err := h.svc.UpdatePerson(r.Context(), id, upd); err != nil {
+		h.logger.Error("Failed to update person",
+			logMethod,
+			logPath,
+			zap.Error(err),
+			zap.Int("person_id", id),
+			zap.Any("update_data", upd),
+		)
 		http.Error(w, "failed to update person: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	h.logger.Info("Person updated successfully",
+		logMethod,
+		logPath,
+		zap.Int("person_id", id),
+	)
+	w.WriteHeader(http.StatusOK)
 }
 
 // Delete Handler Удаление человека по ID
 func (h *Handler) DeletePerson(w http.ResponseWriter, r *http.Request) {
+	logMethod := zap.String("method", r.Method)
+	logPath := zap.String("path", r.URL.Path)
+
+	start := time.Now()
+	defer func() {
+		h.logger.Debug("Request completed",
+			logMethod,
+			logPath,
+			zap.Duration("duration", time.Since(start)))
+	}()
+
 	idParam := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
+		h.logger.Warn("Invalid ID parameter",
+			logMethod,
+			logPath,
+			zap.String("id_param", idParam),
+			zap.Error(err),
+		)
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
 
+	h.logger.Debug("Deleting person",
+		logMethod,
+		logPath,
+		zap.Int("person_id", id),
+	)
+
 	err = h.svc.DeletePerson(r.Context(), id)
 	if err != nil {
-
 		if strings.Contains(err.Error(), "not found") {
+			h.logger.Warn("Person not found",
+				logMethod,
+				logPath,
+				zap.Int("person_id", id),
+			)
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 
+		h.logger.Error("Failed to delete person",
+			logMethod,
+			logPath,
+			zap.Error(err),
+			zap.Int("person_id", id),
+		)
 		http.Error(w, "failed to delete person: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	h.logger.Info("Person deleted successfully",
+		logMethod,
+		logPath,
+		zap.Int("person_id", id),
+	)
 	w.WriteHeader(http.StatusNoContent)
 }
