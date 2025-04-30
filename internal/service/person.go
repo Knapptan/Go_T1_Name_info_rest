@@ -21,7 +21,7 @@ func NewPersonService(repo repository.PersonRepository, enricher *clients.Enrich
 	return &PersonService{
 		repo:     repo,
 		enricher: enricher,
-		logger:   logger,
+		logger:   logger.With(zap.String("component", "person_service")),
 	}
 }
 

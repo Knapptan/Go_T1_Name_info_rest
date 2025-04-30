@@ -19,7 +19,9 @@ type PostgresRepository struct {
 }
 
 func NewPostgresRepository(pool *pgxpool.Pool, logger *zap.Logger) *PostgresRepository {
-	return &PostgresRepository{pool: pool, logger: logger}
+	return &PostgresRepository{
+		pool:   pool,
+		logger: logger.With(zap.String("component", "postgres_repository"))}
 }
 
 func NewPostgresDB(ctx context.Context, connString string) (*pgxpool.Pool, error) {

@@ -34,4 +34,6 @@
 
 Миграции: golang-migrate
 
+Логгер: zap
+
 Swagger: swaggo

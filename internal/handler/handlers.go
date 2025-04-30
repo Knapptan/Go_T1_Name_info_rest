@@ -2,10 +2,10 @@ package handler
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"effective-mobile/internal/models"
 	"effective-mobile/internal/service"
@@ -20,32 +20,59 @@ type Handler struct {
 }
 
 func NewHandler(svc *service.PersonService, logger *zap.Logger) *Handler {
-	return &Handler{svc: svc, logger: logger}
+	return &Handler{
+		svc:    svc,
+		logger: logger.With(zap.String("component", "http_handler")),
+	}
 }
 
 // Post Handler Создание обогащённого человека
 func (h *Handler) CreatePerson(w http.ResponseWriter, r *http.Request) {
+
+	start := time.Now()
+	logMethod := zap.String("method", r.Method)
+	logPath := zap.String("path", r.URL.Path)
+
+	defer func() {
+		h.logger.Debug("Request completed",
+			logMethod,
+			logPath,
+			zap.Duration("duration", time.Since(start)))
+	}()
+
 	var input models.PersonInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.logger.Error("Invalid request body", logMethod, logPath, zap.Error(err))
 		http.Error(w, "invalid JSON body", http.StatusBadRequest)
-		log.Printf("invalid JSON body: %v", err)
 		return
 	}
 	defer r.Body.Close()
 
 	if input.Name == "" || input.Surname == "" {
+		h.logger.Warn("Validation failed", logMethod, logPath, zap.String("reason", "missing required fields"),
+			zap.Any("input", input))
 		http.Error(w, "name and surname are required", http.StatusBadRequest)
 		return
 	}
 
 	person, err := h.svc.CreatePersonEnriched(r.Context(), input)
 	if err != nil {
+		h.logger.Error("Failed to create person", logMethod, logPath, zap.Error(err), zap.Any("input", input))
 		http.Error(w, "failed to create person: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(person)
 
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(person); err != nil {
+		h.logger.Error("Failed to encode response", logMethod, logPath, zap.Error(err))
+		return
+	}
+
+	h.logger.Info("Person created successfully",
+		logMethod, logPath,
+		zap.Int("person_id", person.ID),
+		zap.String("name", person.Name),
+	)
 }
 
 // Get Handler Получение списка людей с фильтрами и пагинацией
