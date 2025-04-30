@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 
 	"effective-mobile/internal/clients"
 	"effective-mobile/internal/config"
-	"effective-mobile/internal/models"
+	"effective-mobile/internal/handler"
 	"effective-mobile/internal/repository"
 	"effective-mobile/internal/service"
 
@@ -17,13 +18,12 @@ func main() {
 
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("invalid pars config")
+		log.Fatalf("config load error: %v", err)
 	}
 
-	ctx := context.Background()
-	pool, err := repository.NewPostgresDB(ctx, cfg.DatabaseURL())
+	pool, err := repository.NewPostgresDB(context.Background(), cfg.DatabaseURL())
 	if err != nil {
-		log.Fatalf("cannot connect to db: %v", err)
+		log.Fatalf("db connection error: %v", err)
 	}
 	defer pool.Close()
 
@@ -31,30 +31,17 @@ func main() {
 
 	enricher := clients.NewEnrichmentClient()
 
-	personService := service.NewPersonService(repo, enricher)
-
-	patronymic := "Vasilevich"
-
-	personInput := models.PersonInput{
-		Name:       "Dmitriy",
-		Surname:    "Ushakov",
-		Patronymic: &patronymic,
-	}
-
-	person, err := personService.CreatePersonEnriched(ctx, personInput)
-	if err != nil {
-		log.Fatalf("CreatePersonEnriched failed: %v", err)
-	}
-
-	if err := repo.CreatePerson(ctx, person); err != nil {
-		log.Fatalf("CreatePerson failed: %v", err)
-	}
+	svc := service.NewPersonService(repo, enricher)
+	h := handler.NewHandler(svc)
 
 	r := chi.NewRouter()
 	r.Route("/api/v1/people", func(r chi.Router) {
-		// 	r.Post("/", h.CreatePerson)
+		r.Post("/", h.CreatePerson)
 		// 	r.Get("/", h.GetPeople)
 		// 	r.Put("/{id}", h.UpdatePerson)
 		// 	r.Delete("/{id}", h.DeletePerson)
 	})
+
+	log.Printf("starting server on port %s", cfg.Port)
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, r))
 }
