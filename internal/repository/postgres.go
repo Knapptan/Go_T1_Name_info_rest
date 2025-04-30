@@ -5,7 +5,6 @@ import (
 	"effective-mobile/internal/models"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -42,7 +41,7 @@ func NewPostgresDB(ctx context.Context, connString string) (*pgxpool.Pool, error
 }
 
 func (r *PostgresRepository) CreatePerson(ctx context.Context, person *models.PersonEnriched) error {
-	r.logger.Debug("Creating person",
+	r.logger.Debug("CreatePerson started",
 		zap.String("name", person.Name),
 		zap.String("surname", person.Surname),
 	)
@@ -81,13 +80,19 @@ func (r *PostgresRepository) CreatePerson(ctx context.Context, person *models.Pe
 }
 
 func (r *PostgresRepository) GetPersons(ctx context.Context, filters models.Filters) ([]models.PersonEnriched, error) {
+	r.logger.Debug("GetPersons started",
+		zap.Any("filters", filters),
+		zap.Int("limit", filters.Limit),
+		zap.Int("offset", filters.Offset),
+	)
+
 	query := strings.Builder{}
 	query.WriteString(`
-	    SELECT
-      id, name, surname, patronymic,
-      age, gender, nationality, created_at
-    FROM persons
-    WHERE 1=1`)
+        SELECT
+            id, name, surname, patronymic,
+            age, gender, nationality, created_at
+        FROM persons
+        WHERE 1=1`)
 
 	args := make([]interface{}, 0)
 	argsCounter := 1
@@ -107,9 +112,19 @@ func (r *PostgresRepository) GetPersons(ctx context.Context, filters models.Filt
 	query.WriteString(fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argsCounter, argsCounter+1))
 	args = append(args, filters.Limit, filters.Offset)
 
+	r.logger.Debug("Executing SQL query",
+		zap.String("query", query.String()),
+		zap.Any("args", args),
+	)
+
 	rows, err := r.pool.Query(ctx, query.String(), args...)
 	if err != nil {
-		return nil, err
+		r.logger.Error("Database query failed",
+			zap.Error(err),
+			zap.String("query", query.String()),
+			zap.Any("arguments", args),
+		)
+		return nil, fmt.Errorf("database query error: %w", err)
 	}
 	defer rows.Close()
 
@@ -128,15 +143,29 @@ func (r *PostgresRepository) GetPersons(ctx context.Context, filters models.Filt
 			&p.CreatedAt,
 		)
 		if err != nil {
-			return nil, err
+			r.logger.Error("Row scanning error",
+				zap.Error(err),
+				zap.String("query", query.String()),
+			)
+			return nil, fmt.Errorf("row scan error: %w", err)
 		}
 		persons = append(persons, p)
 	}
+
+	r.logger.Info("Successfully fetched persons",
+		zap.Int("count", len(persons)),
+		zap.Int("limit", filters.Limit),
+		zap.Int("page", filters.Offset/filters.Limit+1),
+	)
 
 	return persons, nil
 }
 
 func (r *PostgresRepository) UpdatePerson(ctx context.Context, id int, upd models.PersonUpdate) error {
+	r.logger.Debug("UpdatePerson started",
+		zap.Any("PersonUpdate", upd),
+	)
+
 	var (
 		setClauses []string
 		args       []interface{}
@@ -185,27 +214,58 @@ func (r *PostgresRepository) UpdatePerson(ctx context.Context, id int, upd model
 	)
 	args = append(args, id)
 
-	log.Printf("Executing query: %s\nWith args: %v", query, args)
+	r.logger.Debug("Executing SQL query",
+		zap.String("query", query),
+		zap.Any("args", args),
+	)
 
-	tag, err := r.pool.Exec(ctx, query, args...)
+	_, err := r.pool.Exec(ctx, query, args...)
 	if err != nil {
-		log.Printf("Update error: %v", err)
-		return err
+		r.logger.Error("Database query failed",
+			zap.Error(err),
+			zap.String("query", query),
+			zap.Any("arguments", args),
+		)
+		return fmt.Errorf("database query error: %w", err)
 	}
 
-	log.Printf("Update result: %v", tag)
 	return nil
 }
-
 func (r *PostgresRepository) DeletePerson(ctx context.Context, id int) error {
-	tag, err := r.pool.Exec(ctx,
-		"DELETE FROM persons WHERE id = $1", id)
+	r.logger.Debug("DeletePerson started",
+		zap.Int("id", id),
+	)
+
+	query := "DELETE FROM persons WHERE id = $1"
+
+	r.logger.Debug("Executing delete query",
+		zap.String("query", query),
+		zap.Int("id", id),
+	)
+
+	tag, err := r.pool.Exec(ctx, query, id)
 	if err != nil {
+		r.logger.Error("Failed to delete person",
+			zap.Error(err),
+			zap.String("query", query),
+			zap.Int("id", id),
+		)
 		return fmt.Errorf("error deleting person: %w", err)
 	}
 
-	if tag.RowsAffected() == 0 {
+	rowsAffected := tag.RowsAffected()
+	if rowsAffected == 0 {
+		r.logger.Warn("Person not found",
+			zap.Int("id", id),
+			zap.String("query", query),
+		)
 		return fmt.Errorf("person with id %d not found", id)
 	}
+
+	r.logger.Info("Successfully deleted person",
+		zap.Int("id", id),
+		zap.Int64("rows_affected", rowsAffected),
+	)
+
 	return nil
 }
