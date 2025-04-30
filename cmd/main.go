@@ -37,9 +37,9 @@ func main() {
 	r := chi.NewRouter()
 	r.Route("/api/v1/people", func(r chi.Router) {
 		r.Post("/", h.CreatePerson)
-		// 	r.Get("/", h.GetPeople)
+		r.Get("/", h.GetPeople)
 		// 	r.Put("/{id}", h.UpdatePerson)
-		// 	r.Delete("/{id}", h.DeletePerson)
+		r.Delete("/{id}", h.DeletePerson)
 	})
 
 	log.Printf("starting server on port %s", cfg.Port)

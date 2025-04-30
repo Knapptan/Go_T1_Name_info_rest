@@ -4,9 +4,13 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"effective-mobile/internal/models"
 	"effective-mobile/internal/service"
+
+	"github.com/go-chi/chi"
 	// "github.com/go-chi/chi"
 	// "github.com/go-chi/chi/v5"
 )
@@ -19,7 +23,7 @@ func NewHandler(svc *service.PersonService) *Handler {
 	return &Handler{svc: svc}
 }
 
-// r.Post("/", h.CreatePerson)
+// Post Handler Создание обогащённого человека
 func (h *Handler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 	var input models.PersonInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -43,17 +47,66 @@ func (h *Handler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// r.Get("/", h.GetPeople)
-func GetPeople(w http.ResponseWriter, r *http.Request) {
+// Get Handler Получение списка людей с фильтрами и пагинацией
+func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
+	filters := models.Filters{
+		Name:   r.URL.Query().Get("name"),
+		Gender: r.URL.Query().Get("gender"),
+	}
 
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	filters.Offset = (page - 1) * limit
+	filters.Limit = limit
+
+	people, err := h.svc.GetPersons(r.Context(), filters)
+	if err != nil {
+		http.Error(w, "failed to fetch people: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(people)
 }
 
-// r.Put("/{id}", h.UpdatePerson)
-func UpdatePerson(w http.ResponseWriter, r *http.Request) {
-
+// Put Handler Обновление данных человека
+func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	log.Println(id)
 }
 
-// r.Delete("/{id}", h.DeletePerson)
-func DeletePerson(w http.ResponseWriter, r *http.Request) {
+// Delete Handler Удаление человека по ID
+func (h *Handler) DeletePerson(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
 
+	err = h.svc.DeletePerson(r.Context(), id)
+	if err != nil {
+
+		if strings.Contains(err.Error(), "not found") {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		http.Error(w, "failed to delete person: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

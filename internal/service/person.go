@@ -59,3 +59,15 @@ func (s *PersonService) CreatePersonEnriched(ctx context.Context, input models.P
 
 	return &person, nil
 }
+
+func (s *PersonService) GetPersons(ctx context.Context, filters models.Filters) ([]models.PersonEnriched, error) {
+	return s.repo.GetPersons(ctx, filters)
+}
+
+func (s *PersonService) DeletePerson(ctx context.Context, id int) error {
+	return s.repo.DeletePerson(ctx, id)
+}
+
+func (s *PersonService) UpdatePerson(ctx context.Context, id int, update models.PersonUpdate) error {
+	return s.repo.UpdatePerson(ctx, id, update)
+}

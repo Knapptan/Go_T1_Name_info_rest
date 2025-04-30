@@ -155,7 +155,14 @@ func (r *PostgresRepository) UpdatePerson(ctx context.Context, id int, update mo
 }
 
 func (r *PostgresRepository) DeletePerson(ctx context.Context, id int) error {
-	query := `DELETE FROM persons WHERE id = $1`
-	_, err := r.pool.Exec(ctx, query, id)
-	return err
+	tag, err := r.pool.Exec(ctx,
+		"DELETE FROM persons WHERE id = $1", id)
+	if err != nil {
+		return fmt.Errorf("error deleting person: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("person with id %d not found", id)
+	}
+	return nil
 }
