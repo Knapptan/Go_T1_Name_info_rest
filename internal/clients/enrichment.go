@@ -6,17 +6,21 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type EnrichmentClient struct {
 	client *http.Client
+	logger *zap.Logger
 }
 
-func NewEnrichmentClient() *EnrichmentClient {
+func NewEnrichmentClient(logger *zap.Logger) *EnrichmentClient {
 	return &EnrichmentClient{
 		client: &http.Client{
 			Timeout: 5 * time.Second,
 		},
+		logger: logger,
 	}
 }
 

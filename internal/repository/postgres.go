@@ -11,7 +11,17 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
+
+type PostgresRepository struct {
+	pool   *pgxpool.Pool
+	logger *zap.Logger
+}
+
+func NewPostgresRepository(pool *pgxpool.Pool, logger *zap.Logger) *PostgresRepository {
+	return &PostgresRepository{pool: pool, logger: logger}
+}
 
 func NewPostgresDB(ctx context.Context, connString string) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(connString)
@@ -31,15 +41,12 @@ func NewPostgresDB(ctx context.Context, connString string) (*pgxpool.Pool, error
 	return pool, nil
 }
 
-type PostgresRepository struct {
-	pool *pgxpool.Pool
-}
-
-func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
-	return &PostgresRepository{pool: pool}
-}
-
 func (r *PostgresRepository) CreatePerson(ctx context.Context, person *models.PersonEnriched) error {
+	r.logger.Debug("Creating person",
+		zap.String("name", person.Name),
+		zap.String("surname", person.Surname),
+	)
+
 	query := `
     INSERT INTO persons 
       (name, surname, patronymic, age, gender, nationality) 
@@ -56,10 +63,21 @@ func (r *PostgresRepository) CreatePerson(ctx context.Context, person *models.Pe
 		"nationality": person.Nationality,
 	}
 
-	return r.pool.QueryRow(ctx, query, args).Scan(
-		&person.ID,
-		&person.CreatedAt,
+	row := r.pool.QueryRow(ctx, query, args)
+	if err := row.Scan(&person.ID, &person.CreatedAt); err != nil {
+		r.logger.Error("Failed to create person",
+			zap.Error(err),
+			zap.String("query", query),
+			zap.Any("arguments", args),
+		)
+		return fmt.Errorf("create person: %w", err)
+	}
+
+	r.logger.Info("Person created successfully",
+		zap.Int("id", person.ID),
+		zap.Time("created_at", person.CreatedAt),
 	)
+	return nil
 }
 
 func (r *PostgresRepository) GetPersons(ctx context.Context, filters models.Filters) ([]models.PersonEnriched, error) {

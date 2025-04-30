@@ -14,8 +14,9 @@ type DBConfig struct {
 }
 
 type Config struct {
-	Port     string
-	DBConfig DBConfig
+	Port        string
+	Environment string // dev/prod
+	DBConfig    DBConfig
 }
 
 func (cfg *Config) DatabaseURL() string {

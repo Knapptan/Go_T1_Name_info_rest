@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	"effective-mobile/internal/clients"
@@ -12,27 +11,28 @@ import (
 	"effective-mobile/internal/service"
 
 	"github.com/go-chi/chi"
+	"go.uber.org/zap"
 )
 
 func main() {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
 
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("config load error: %v", err)
+		logger.Fatal("Config load error", zap.Error(err))
 	}
 
 	pool, err := repository.NewPostgresDB(context.Background(), cfg.DatabaseURL())
 	if err != nil {
-		log.Fatalf("db connection error: %v", err)
+		logger.Fatal("DB connection error", zap.Error(err))
 	}
 	defer pool.Close()
 
-	repo := repository.NewPostgresRepository(pool)
-
-	enricher := clients.NewEnrichmentClient()
-
-	svc := service.NewPersonService(repo, enricher)
-	h := handler.NewHandler(svc)
+	repo := repository.NewPostgresRepository(pool, logger)
+	enricher := clients.NewEnrichmentClient(logger)
+	svc := service.NewPersonService(repo, enricher, logger)
+	h := handler.NewHandler(svc, logger)
 
 	r := chi.NewRouter()
 	r.Route("/api/v1/people", func(r chi.Router) {
@@ -42,6 +42,12 @@ func main() {
 		r.Delete("/{id}", h.DeletePerson)
 	})
 
-	log.Printf("starting server on port %s", cfg.Port)
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, r))
+	logger.Info("Starting server",
+		zap.String("port", cfg.Port),
+		zap.String("environment", cfg.Environment),
+	)
+
+	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {
+		logger.Fatal("Server failed", zap.Error(err))
+	}
 }

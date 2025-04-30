@@ -7,17 +7,21 @@ import (
 	"effective-mobile/internal/repository"
 	"fmt"
 	"log"
+
+	"go.uber.org/zap"
 )
 
 type PersonService struct {
 	repo     repository.PersonRepository
 	enricher *clients.EnrichmentClient
+	logger   *zap.Logger
 }
 
-func NewPersonService(repo repository.PersonRepository, enricher *clients.EnrichmentClient) *PersonService {
+func NewPersonService(repo repository.PersonRepository, enricher *clients.EnrichmentClient, logger *zap.Logger) *PersonService {
 	return &PersonService{
 		repo:     repo,
 		enricher: enricher,
+		logger:   logger,
 	}
 }
 

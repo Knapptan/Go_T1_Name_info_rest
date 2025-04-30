@@ -16,6 +16,11 @@ func Load() (*models.Config, error) {
 		return nil, fmt.Errorf("error loading ini.env: %w", err)
 	}
 
+	environment := os.Getenv("ENVIRONMENT")
+	if environment == "" {
+		return nil, fmt.Errorf("environment variable ENVIRONMENT is not set")
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		return nil, fmt.Errorf("environment variable PORT is not set")
@@ -49,7 +54,8 @@ func Load() (*models.Config, error) {
 	}
 
 	cfg := &models.Config{
-		Port: port,
+		Port:        port,
+		Environment: environment,
 		DBConfig: models.DBConfig{
 			Host:     host,
 			Port:     dbPort,

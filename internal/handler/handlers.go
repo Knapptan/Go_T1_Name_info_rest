@@ -11,14 +11,16 @@ import (
 	"effective-mobile/internal/service"
 
 	"github.com/go-chi/chi"
+	"go.uber.org/zap"
 )
 
 type Handler struct {
-	svc *service.PersonService
+	svc    *service.PersonService
+	logger *zap.Logger
 }
 
-func NewHandler(svc *service.PersonService) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc *service.PersonService, logger *zap.Logger) *Handler {
+	return &Handler{svc: svc, logger: logger}
 }
 
 // Post Handler Создание обогащённого человека
