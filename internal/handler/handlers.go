@@ -11,8 +11,6 @@ import (
 	"effective-mobile/internal/service"
 
 	"github.com/go-chi/chi"
-	// "github.com/go-chi/chi"
-	// "github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -31,6 +29,7 @@ func (h *Handler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 		log.Printf("invalid JSON body: %v", err)
 		return
 	}
+	defer r.Body.Close()
 
 	if input.Name == "" || input.Surname == "" {
 		http.Error(w, "name and surname are required", http.StatusBadRequest)
@@ -84,7 +83,19 @@ func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
-	log.Println(id)
+
+	var upd models.PersonUpdate
+	if err := json.NewDecoder(r.Body).Decode(&upd); err != nil {
+		http.Error(w, "invalid JSON body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if err := h.svc.UpdatePerson(r.Context(), id, upd); err != nil {
+		http.Error(w, "failed to update person: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // Delete Handler Удаление человека по ID
