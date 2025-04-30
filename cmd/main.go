@@ -38,7 +38,7 @@ func main() {
 	r.Route("/api/v1/people", func(r chi.Router) {
 		r.Post("/", h.CreatePerson)
 		r.Get("/", h.GetPeople)
-		r.Put("/{id}", h.UpdatePerson)
+		r.Patch("/{id}", h.UpdatePerson)
 		r.Delete("/{id}", h.DeletePerson)
 	})
 

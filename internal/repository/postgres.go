@@ -5,6 +5,7 @@ import (
 	"effective-mobile/internal/models"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -117,41 +118,65 @@ func (r *PostgresRepository) GetPersons(ctx context.Context, filters models.Filt
 	return persons, nil
 }
 
-func (r *PostgresRepository) UpdatePerson(ctx context.Context, id int, update models.PersonUpdate) error {
-	query := strings.Builder{}
-	query.WriteString("UPDATE persons SET")
+func (r *PostgresRepository) UpdatePerson(ctx context.Context, id int, upd models.PersonUpdate) error {
+	var (
+		setClauses []string
+		args       []interface{}
+		argPos     = 1
+	)
 
-	args := make([]interface{}, 0)
-	argCounter := 1
-
-	if update.Age != nil {
-		query.WriteString(fmt.Sprintf(" age = $%d", argCounter))
-		args = append(args, *update.Age)
-		argCounter++
+	if upd.Name != nil {
+		setClauses = append(setClauses, fmt.Sprintf("name = $%d", argPos))
+		args = append(args, *upd.Name)
+		argPos++
+	}
+	if upd.Surname != nil {
+		setClauses = append(setClauses, fmt.Sprintf("surname = $%d", argPos))
+		args = append(args, *upd.Surname)
+		argPos++
+	}
+	if upd.Patronymic != nil {
+		setClauses = append(setClauses, fmt.Sprintf("patronymic = $%d", argPos))
+		args = append(args, *upd.Patronymic)
+		argPos++
+	}
+	if upd.Age != nil {
+		setClauses = append(setClauses, fmt.Sprintf("age = $%d", argPos))
+		args = append(args, *upd.Age)
+		argPos++
+	}
+	if upd.Gender != nil {
+		setClauses = append(setClauses, fmt.Sprintf("gender = $%d", argPos))
+		args = append(args, *upd.Gender)
+		argPos++
+	}
+	if upd.Nationality != nil {
+		setClauses = append(setClauses, fmt.Sprintf("nationality = $%d", argPos))
+		args = append(args, *upd.Nationality)
+		argPos++
 	}
 
-	if update.Gender != nil {
-		query.WriteString(fmt.Sprintf(" gender = $%d", argCounter))
-		args = append(args, *update.Gender)
-		argCounter++
-	}
-
-	if update.Nationality != nil {
-		query.WriteString(fmt.Sprintf(" nationality = $%d", argCounter))
-		args = append(args, *update.Nationality)
-		argCounter++
-	}
-
-	if len(args) == 0 {
+	if len(setClauses) == 0 {
 		return errors.New("no fields to update")
 	}
 
-	queryStr := strings.TrimSuffix(query.String(), ",") + fmt.Sprintf(" WHERE id = $%d", argCounter)
-
+	query := fmt.Sprintf(
+		"UPDATE persons SET %s WHERE id = $%d",
+		strings.Join(setClauses, ", "),
+		argPos,
+	)
 	args = append(args, id)
 
-	_, err := r.pool.Exec(ctx, queryStr, args...)
-	return err
+	log.Printf("Executing query: %s\nWith args: %v", query, args)
+
+	tag, err := r.pool.Exec(ctx, query, args...)
+	if err != nil {
+		log.Printf("Update error: %v", err)
+		return err
+	}
+
+	log.Printf("Update result: %v", tag)
+	return nil
 }
 
 func (r *PostgresRepository) DeletePerson(ctx context.Context, id int) error {

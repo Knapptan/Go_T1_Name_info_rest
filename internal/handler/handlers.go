@@ -95,7 +95,7 @@ func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to update person: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+
 }
 
 // Delete Handler Удаление человека по ID
