@@ -189,7 +189,7 @@ func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /people/{id} [put]
+// @Router /people/{id} [patch]
 func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	logMethod := zap.String("method", r.Method)
 	logPath := zap.String("path", r.URL.Path)

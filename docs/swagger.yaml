@@ -172,7 +172,7 @@ paths:
       summary: Удалить человека
       tags:
       - people
-    put:
+    patch:
       consumes:
       - application/json
       description: Обновление данных существующей персоны
