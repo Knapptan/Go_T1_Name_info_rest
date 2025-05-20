@@ -88,7 +88,7 @@ curl "http://localhost:8080/api/v1/people?page=1&limit=10&gender=male"
 
 ## Обновление данных
 
-curl -X PUT http://localhost:8080/api/v1/people/1 \
+curl -X PATCH http://localhost:8080/api/v1/people/1 \
  -H "Content-Type: application/json" \
  -d '{"age": 35}'
 
